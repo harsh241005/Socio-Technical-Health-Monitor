@@ -1,13 +1,23 @@
-# Ignore Data Files
-data/*
-!data/.gitkeep
+# Ignore all heavy data files inside the new subdirectories
+data/raw/*
+data/interim/*
+data/processed/*
+
+# EXCEPT the .gitkeep files (this forces Git to upload the folder structure)
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Global file type ignores
 *.csv
 *.mbox
 *.zip
 
-# Ignore Python Cache
+# Ignore Python Cache & OS files
 __pycache__/
 *.pyc
-
-# Ignore OS generated files
 .DS_Store
+
+# Ignore Virtual Environments (Standard practice)
+venv/
+env/
