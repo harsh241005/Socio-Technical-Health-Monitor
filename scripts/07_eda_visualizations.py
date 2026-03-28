@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 input_file = "data/enriched_project_dataset.csv"
-output_dir = "visuals"
+output_dir = "visuals/eda_plots"
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)

@@ -5,7 +5,7 @@ import os
 # To download a different year range, update this list.
 YEARS = [2023, 2024]
 
-OUTPUT_DIR = "data/mbox_files"
+OUTPUT_DIR = "data/raw/mbox_files"
 
 # Developer mailing lists only — commits and issues lists are excluded
 # because they contain automated bot messages with zero sentiment value.

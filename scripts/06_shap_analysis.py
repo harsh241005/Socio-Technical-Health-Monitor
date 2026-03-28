@@ -36,6 +36,12 @@ print(classification_report(y_test, y_pred, target_names=['Active', 'Stalled']))
 y_probs = final_model.predict_proba(X_test)[:, 1]
 display = PrecisionRecallDisplay.from_predictions(y_test, y_probs, name="XGBoost (Honest Features)")
 plt.title("ISA III: Precision-Recall Curve (Pure Communication Signals)")
+
+# Ensure output directories exist before saving
+import os
+os.makedirs('visuals', exist_ok=True)
+os.makedirs('models', exist_ok=True)
+
 plt.savefig("visuals/isa3_honest_pr_curve.png", bbox_inches='tight')
 print("Saved PR Curve to visuals/isa3_honest_pr_curve.png")
 plt.close()
