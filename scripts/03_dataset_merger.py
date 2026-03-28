@@ -3,8 +3,8 @@ import os
 import glob
 
 # --- CONFIGURATION ---
-input_folder = "data/parsed_chunks"
-output_file = "data/master_project_dataset.csv"
+input_folder = "data/interim/parsed_chunks"
+output_file = "data/interim/master_project_dataset.csv"
 
 all_files = glob.glob(os.path.join(input_folder, "*.csv"))
 print(f"Found {len(all_files)} datasets. Merging...")

@@ -74,9 +74,9 @@ custom_lexicon = {
 sia.lexicon.update(custom_lexicon)
 
 # --- DIRECTORY CONFIGURATION ---
-jira_csv_path = 'data/issues.csv'
-mbox_folder = 'data/mbox_files'
-output_folder = 'data/parsed_chunks'
+jira_csv_path = 'data/raw/issues.csv'
+mbox_folder = 'data/raw/mbox_files'
+output_folder = 'data/interim/parsed_chunks'
 
 
 def get_sentiment(text):
@@ -88,7 +88,7 @@ def parse_mbox_robust(mbox_path):
     """
     Scans an mbox file for JIRA ticket references using a greedy regex
     that handles punctuation variants: [HDFS-123], HDFS-123:, Re: HDFS-123.
-    Returns a DataFrame of (ticket_key, email_subject, email_date, behavior_score).
+    Returns a DataFrame of (ticket_key, email_subject, email_date, behavior_score, sender, body_snippet).
     """
     mbox = mailbox.mbox(mbox_path)
     email_data = []
@@ -100,6 +100,10 @@ def parse_mbox_robust(mbox_path):
     for message in mbox:
         count += 1
         subject = message['subject'] or ""
+        
+        # --- EXTRACT SENDER ---
+        sender = message.get('From', 'Unknown')
+        
         try:
             payload = message.get_payload()
             if message.is_multipart():
@@ -111,10 +115,12 @@ def parse_mbox_robust(mbox_path):
         except Exception:
             body_text = ""
 
+        # --- EXTRACT BODY SNIPPET ---
+        body_snippet = str(body_text)[:500].replace('\n', ' ').strip()
+
         full_text = f"{subject} {body_text}"
         mentioned_tickets = set(ticket_pattern.findall(full_text))
 
-        # Analyze first 1000 chars of body — sufficient signal, avoids email signatures
         sentiment = get_sentiment(body_text[:1000])
         date_str = message['date']
 
@@ -123,7 +129,10 @@ def parse_mbox_robust(mbox_path):
                 'ticket_key': ticket.upper().strip(),
                 'email_subject': subject[:100],
                 'email_date': date_str,
-                'behavior_score': sentiment
+                'behavior_score': sentiment,
+                # Add new fields to the output
+                'sender': sender,
+                'body_snippet': body_snippet
             })
 
     print(f"    -> Scanned {count} emails.")
