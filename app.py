@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import joblib
 import shap
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import streamlit.components.v1 as components
 
 # --- PAGE CONFIG ---
@@ -336,7 +339,6 @@ def load_assets():
 
 model, explainer = load_assets()
 
-# Removed has_enough_emails for the 6 Core Signals approach
 features = [
     'email_count_per_ticket', 'subject_length',
     'avg_sentiment', 'sentiment_variance', 'sentiment_trend',
@@ -375,16 +377,18 @@ with st.sidebar:
     priority = st.selectbox("Ticket Priority", [1, 2, 3, 4, 5], index=2,
                              format_func=lambda x: f"{x} — {PRIORITY_MAP[x]}")
 
+    has_enough = 1 if email_count >= 2 else 0
+
     st.markdown(f"""
 <div style="margin-top:1.5rem; padding:0.8rem; background:#0a0e1a; border:1px solid #1e2d45; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:#4a5a72; line-height:2;">
+    has_enough_emails → <span style="color:#06b6d4">{has_enough}</span><br>
     priority_numeric → <span style="color:#06b6d4">{priority}</span><br>
-    features active → <span style="color:#06b6d4">6 / 6</span>
+    features active → <span style="color:#06b6d4">7 / 7</span>
 </div>
 """, unsafe_allow_html=True)
 
 
 # ── PREDICTION ──────────────────────────────────────────────────────────────
-# Updated input array to 6 features
 input_array = np.array([[email_count, subject_length, avg_sent, sent_var, sent_trend, priority]])
 input_df = pd.DataFrame(input_array, columns=features)
 prob_stalled = model.predict_proba(input_df)[0][1]
@@ -427,7 +431,7 @@ st.markdown(f"""
     </div>
     <div class="header-badge">
         MODEL · XGBoost (ISA III)<br>
-        FEATURES · 6 Pure Signals<br>
+        FEATURES · 7 Pure Signals<br>
         DATASET · Apache Hadoop 2023–2024
     </div>
 </div>
@@ -495,21 +499,21 @@ with col_left:
 </div>
 """, unsafe_allow_html=True)
 
-    # Model performance chips with updated ISA III metrics
+    # Model performance chips
     st.markdown('<div class="section-header" style="margin-top:1.2rem;">Model Performance</div>', unsafe_allow_html=True)
     st.markdown("""
 <div class="metrics-row">
     <div class="metric-chip">
         <div class="metric-chip-label">Recall</div>
-        <div class="metric-chip-value">0.89</div>
+        <div class="metric-chip-value">0.97</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">Precision</div>
-        <div class="metric-chip-value">0.79</div>
+        <div class="metric-chip-value">0.78</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">PR-AUC</div>
-        <div class="metric-chip-value">0.93</div>
+        <div class="metric-chip-value">0.94</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">Threshold</div>
@@ -534,25 +538,72 @@ with col_right:
 
     shap_vals = explainer.shap_values(input_df)
 
-    def st_shap(plot, height=180):
-            shap_html = f"""
-            <html>
-            <head>
-                <style>
-                    body {{ background: #111827 !important; margin: 0; padding: 8px; }}
-                    /* Force all SHAP SVG text and lines to be visible in dark mode */
-                    text {{ fill: #e8edf5 !important; font-family: 'IBM Plex Mono', monospace !important; }}
-                    path {{ stroke: #4a5a72 !important; }}
-                    line {{ stroke: #4a5a72 !important; }}
-                    * {{ color: #e8edf5 !important; }}
-                </style>
-                {shap.getjs()}
-            </head>
-            <body>{plot.html()}</body>
-            </html>
-            """
-            components.html(shap_html, height=height)
-    st_shap(shap.force_plot(explainer.expected_value, shap_vals[0, :], input_df.iloc[0, :]), height=200)
+    # ── WATERFALL CHART (replaces broken shap.force_plot/getjs approach) ──────
+    matplotlib.rcParams.update({'font.family': 'monospace'})
+
+    sv = shap_vals[0]
+    feat_names = features
+    base_val = float(explainer.expected_value)
+
+    # Sort by absolute SHAP value descending
+    order = np.argsort(np.abs(sv))[::-1]
+    sorted_sv    = sv[order]
+    sorted_names = [feat_names[i] for i in order]
+    sorted_vals  = [input_df[feat_names[i]].values[0] for i in order]
+
+    fig, ax = plt.subplots(figsize=(9, 3.6))
+    fig.patch.set_facecolor('#111827')
+    ax.set_facecolor('#111827')
+
+    # Build running cumulative bars from base_val
+    running = base_val
+    bar_lefts, bar_widths, bar_colors = [], [], []
+    for s in sorted_sv:
+        bar_lefts.append(min(running, running + s))
+        bar_widths.append(abs(s))
+        bar_colors.append('#ef4444' if s > 0 else '#3b82f6')
+        running += s
+
+    y_positions = np.arange(len(sorted_sv))
+    ax.barh(y_positions, bar_widths, left=bar_lefts,
+            color=bar_colors, height=0.55, zorder=3)
+
+    # Labels to the right of each bar
+    for i, (left, width, s, val) in enumerate(
+            zip(bar_lefts, bar_widths, sorted_sv, sorted_vals)):
+        sign = '+' if s > 0 else ''
+        ax.text(left + width + 0.005, i,
+                f'{sign}{s:.3f}  (input={val:.2f})',
+                va='center', ha='left', fontsize=7.5,
+                color='#e8edf5', fontfamily='monospace')
+
+    # Base value and prediction lines
+    ax.axvline(base_val, color='#4a5a72', linestyle='--', linewidth=1.2, zorder=2)
+    ax.axvline(base_val + sv.sum(), color='#06b6d4', linestyle='-', linewidth=1.5, zorder=2)
+
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(sorted_names, fontsize=8.5, color='#8a9bb5', fontfamily='monospace')
+    ax.set_xlabel('SHAP value  (impact on model output)', fontsize=8, color='#4a5a72')
+    ax.tick_params(axis='x', colors='#4a5a72', labelsize=7.5)
+    ax.spines[['top', 'right', 'bottom']].set_visible(False)
+    ax.spines['left'].set_color('#1e2d45')
+    ax.set_xlim(
+        left=min(bar_lefts) - 0.08,
+        right=max(b + w for b, w in zip(bar_lefts, bar_widths)) + 0.42
+    )
+    ax.invert_yaxis()
+    ax.grid(axis='x', color='#1e2d45', linewidth=0.5, zorder=1)
+
+    red_patch  = mpatches.Patch(color='#ef4444', label='▲ Increases stall risk')
+    blue_patch = mpatches.Patch(color='#3b82f6', label='▼ Decreases stall risk')
+    ax.legend(handles=[red_patch, blue_patch],
+              fontsize=7.5, loc='lower right',
+              facecolor='#0a0e1a', edgecolor='#1e2d45',
+              labelcolor='#e8edf5')
+
+    plt.tight_layout(pad=0.8)
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
     # SHAP feature contribution table
     st.markdown('<div class="section-header" style="margin-top:1.4rem;">Feature Contribution Breakdown</div>', unsafe_allow_html=True)
@@ -605,7 +656,7 @@ st.markdown(f"""
         Rudresh Achari · Unnat Umarye · Sarvadhnya Patil · Samuel Bhandari · Harsh Palyekar
     </div>
     <div class="footer-right">
-        Model: XGBoost (Honest Features) · 6 Pure Communication Signals<br>
+        Model: XGBoost (Honest Features) · 7 Pure Communication Signals<br>
         Training: 1,000 Human Records · Apache Hadoop 2023–2024<br>
         Threshold: 0.50 · Validated by PR-AUC Curve
     </div>
