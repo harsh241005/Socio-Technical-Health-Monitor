@@ -5,7 +5,7 @@ import seaborn as sns
 import numpy as np
 import os
 
-input_file = "data/enriched_project_dataset.csv"
+input_file = "data/processed/isa3_enriched_dataset.csv"
 output_dir = "visuals/eda_plots"
 
 if not os.path.exists(output_dir):

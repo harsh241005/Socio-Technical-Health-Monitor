@@ -2,7 +2,7 @@ import pandas as pd
 
 print("=== 1. CHECKING TARGET LEAKAGE ===")
 # Load the currently enriched dataset
-df_enriched = pd.read_csv("data/isa3_enriched_dataset.csv")
+df_enriched = pd.read_csv("data/processed/isa3_enriched_dataset.csv")
 
 print("\n--- is_assigned vs is_stalled ---")
 # This will show if unassigned tickets are overwhelmingly stalled
