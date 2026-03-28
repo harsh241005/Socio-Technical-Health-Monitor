@@ -17,7 +17,7 @@ df = pd.read_csv("data/processed/isa3_enriched_dataset.csv")
 safe_features = [
     'email_count_per_ticket', 'subject_length',                      
     'avg_sentiment', 'sentiment_variance', 'sentiment_trend',        
-    'priority_numeric', 'has_enough_emails'                          
+    'priority_numeric'                         
 ]
 
 X_model = df[safe_features]

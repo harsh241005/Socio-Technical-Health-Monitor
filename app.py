@@ -336,10 +336,11 @@ def load_assets():
 
 model, explainer = load_assets()
 
+# Removed has_enough_emails for the 6 Core Signals approach
 features = [
     'email_count_per_ticket', 'subject_length',
     'avg_sentiment', 'sentiment_variance', 'sentiment_trend',
-    'priority_numeric', 'has_enough_emails'
+    'priority_numeric'
 ]
 
 PRIORITY_MAP = {1: "Trivial", 2: "Minor", 3: "Major", 4: "Critical", 5: "Blocker"}
@@ -374,19 +375,17 @@ with st.sidebar:
     priority = st.selectbox("Ticket Priority", [1, 2, 3, 4, 5], index=2,
                              format_func=lambda x: f"{x} — {PRIORITY_MAP[x]}")
 
-    has_enough = 1 if email_count >= 2 else 0
-
     st.markdown(f"""
 <div style="margin-top:1.5rem; padding:0.8rem; background:#0a0e1a; border:1px solid #1e2d45; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:#4a5a72; line-height:2;">
-    has_enough_emails → <span style="color:#06b6d4">{has_enough}</span><br>
     priority_numeric → <span style="color:#06b6d4">{priority}</span><br>
-    features active → <span style="color:#06b6d4">7 / 7</span>
+    features active → <span style="color:#06b6d4">6 / 6</span>
 </div>
 """, unsafe_allow_html=True)
 
 
 # ── PREDICTION ──────────────────────────────────────────────────────────────
-input_array = np.array([[email_count, subject_length, avg_sent, sent_var, sent_trend, priority, has_enough]])
+# Updated input array to 6 features
+input_array = np.array([[email_count, subject_length, avg_sent, sent_var, sent_trend, priority]])
 input_df = pd.DataFrame(input_array, columns=features)
 prob_stalled = model.predict_proba(input_df)[0][1]
 pct = prob_stalled * 100
@@ -428,7 +427,7 @@ st.markdown(f"""
     </div>
     <div class="header-badge">
         MODEL · XGBoost (ISA III)<br>
-        FEATURES · 7 Pure Signals<br>
+        FEATURES · 6 Pure Signals<br>
         DATASET · Apache Hadoop 2023–2024
     </div>
 </div>
@@ -496,21 +495,21 @@ with col_left:
 </div>
 """, unsafe_allow_html=True)
 
-    # Model performance chips
+    # Model performance chips with updated ISA III metrics
     st.markdown('<div class="section-header" style="margin-top:1.2rem;">Model Performance</div>', unsafe_allow_html=True)
     st.markdown("""
 <div class="metrics-row">
     <div class="metric-chip">
         <div class="metric-chip-label">Recall</div>
-        <div class="metric-chip-value">0.97</div>
+        <div class="metric-chip-value">0.89</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">Precision</div>
-        <div class="metric-chip-value">0.78</div>
+        <div class="metric-chip-value">0.79</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">PR-AUC</div>
-        <div class="metric-chip-value">0.94</div>
+        <div class="metric-chip-value">0.93</div>
     </div>
     <div class="metric-chip">
         <div class="metric-chip-label">Threshold</div>
@@ -606,7 +605,7 @@ st.markdown(f"""
         Rudresh Achari · Unnat Umarye · Sarvadhnya Patil · Samuel Bhandari · Harsh Palyekar
     </div>
     <div class="footer-right">
-        Model: XGBoost (Honest Features) · 7 Pure Communication Signals<br>
+        Model: XGBoost (Honest Features) · 6 Pure Communication Signals<br>
         Training: 1,000 Human Records · Apache Hadoop 2023–2024<br>
         Threshold: 0.50 · Validated by PR-AUC Curve
     </div>

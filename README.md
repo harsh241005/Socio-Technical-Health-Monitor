@@ -149,14 +149,15 @@ Socio-Technical-Health-Monitor/
 │   └── isa3_shap_explainer_honest.pkl
 │
 ├── visuals/
-│   ├── 1_sentiment_by_priority.png
-│   ├── 2_stalled_vs_active.png
-│   ├── 3_correlation_heatmap.png
-│   ├── 5_monthly_sentiment_trend.png
-│   ├── 6_email_volume_distribution.png
-│   ├── 7_task_status_by_priority.png
-│   ├── isa3_honest_shap_summary.png
-│   └── isa3_honest_pr_curve.png
+│   ├── eda_plots/                    # EDA charts (output of 07_eda_visualizations.py)
+│   │   ├── 1_sentiment_by_priority.png
+│   │   ├── 2_stalled_vs_active.png
+│   │   ├── 3_correlation_heatmap.png
+│   │   ├── 5_monthly_sentiment_trend.png
+│   │   ├── 6_email_volume_distribution.png
+│   │   └── 7_task_status_by_priority.png
+│   ├── isa3_honest_shap_summary.png  # Output of 06_shap_analysis.py
+│   └── isa3_honest_pr_curve.png      # Output of 06_shap_analysis.py
 │
 ├── tests/
 │   └── test_parse.py                 # Unit tests for email extraction logic
@@ -225,7 +226,7 @@ python scripts/05_model_evaluation.py
 # Step 6 — Train final XGBoost, generate SHAP plots, export .pkl files
 python scripts/06_shap_analysis.py
 
-# Step 7 — Generate all EDA visualisations
+# Step 7 — Generate all EDA visualisations (saved to visuals/eda_plots/)
 python scripts/07_eda_visualizations.py
 
 # Launch the interactive Streamlit dashboard

@@ -287,10 +287,8 @@ HONEST_ML_FEATURES = [
     'avg_sentiment', 
     'sentiment_variance', 
     'sentiment_trend',
-    'priority_numeric',
-    'has_enough_emails'
+    'priority_numeric'
 ]
-
 # Features identified as Target Leakage (Structural Proxies)
 LEAKING_FEATURES = [
     'is_assigned', 
